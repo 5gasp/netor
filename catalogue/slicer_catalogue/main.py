@@ -1,18 +1,27 @@
+# @Author: Daniel Gomes
+# @Date:   2022-08-16 09:35:51
+# @Email:  dagomes@av.it.pt
+# @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
+# @Last Modified by:   Daniel Gomes
+# @Last Modified time: 2022-10-29 20:44:12
 import os
-import importlib, inspect
+import importlib
+import inspect
 import api.models
 from flask import Flask
-from api.views.vs_blueprint import app as vs_blueprint_api
-from api.views.vs_descriptor import app as vs_descriptor_api
-from api.settings import ProdConfig
+from api.views.__init__ import vs_descriptor
+from api.views.__init__ import vs_blueprint
+from api.settings import DevConfig, ProdConfig
 from mongoengine import Document, DynamicDocument
 from flask_mongoengine import MongoEngine
 from rabbitmq.messaging import MessageReceiver
 from api.auth import loginManager
 from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
-
+from oidc import oidc
+import logging
 APPLICATION_NAME = os.environ.get('APPLICATION_NAME', 'catalogues')
+
 
 class ReverseProxied(object):
     def __init__(self, app, script_name):
@@ -24,13 +33,9 @@ class ReverseProxied(object):
         return self.app(environ, start_response)
 
 
-
-
-
-
 def init_flask():
     app = Flask(APPLICATION_NAME)
-    env = os.getenv('ENVIRONMENT','dev')
+    env = os.getenv('ENVIRONMENT', 'dev')
     SWAGGER_URL = '/apidocs'
     API_URL = '/static/documentation.json'
     if env == 'prod':
@@ -49,9 +54,11 @@ def init_flask():
     # Configurations settings
     app.config.from_object(ProdConfig)
 
+    oidc.init_app(app)
+    
     # Register flask's blueprints
-    app.register_blueprint(vs_blueprint_api)
-    app.register_blueprint(vs_descriptor_api)
+    app.register_blueprint(vs_descriptor.app)
+    app.register_blueprint(vs_blueprint.app)
 
     #Register SwaggerUI Blueprint
     app.register_blueprint(SWAGGERUI_BLUEPRINT, url_prefix=SWAGGER_URL)
@@ -74,12 +81,14 @@ def init_flask():
 
     # Authentication
     loginManager.init_app(app)
-
+    logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.DEBUG)
+    logging.getLogger('pika').propagate=False
     app.run(host="0.0.0.0", port=ProdConfig.PORT)
 
 
 def init_rabbit():
     message_receiver = MessageReceiver()
+    print("Started RabbitMQ paa")
     message_receiver.start()
 
 

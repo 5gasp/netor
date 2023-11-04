@@ -1,3 +1,7 @@
+# @Author: Daniel Gomes
+# @Date:   2022-08-16 09:35:51
+# @Last Modified by:   Daniel Gomes
+# @Last Modified time: 2022-09-25 14:13:50
 version: "3.6"
 
 services:
@@ -14,12 +18,12 @@ services:
       MONGO_URL: mongo1
       MONGO_DB: catalogues
       SECRET_KEY: wz3DefHxgQTElMvACRAs1KgAUDPHgTqq
-      RABBIT_HOST: rabbitmq
+      RABBIT_HOST: netor-rabbitmq-1
       RABBIT_USERNAME: admin
       RABBIT_PASSWORD: admin
       IDP_IP: netor_tenant
-      IDP_PORT: 5002
-      IDP_ENDPOINT: /validate
+      IDP_PORT: 8001
+      IDP_ENDPOINT: /oauth/validate
 
 
 
